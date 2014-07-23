@@ -1,0 +1,66 @@
+
+/* ==========================================================================
+   Author's custom styles
+   ========================================================================== */
+html body {
+  padding-top: 0;
+}
+#toprogress {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 200px;
+  min-height: 500px;
+  background: #eee;
+  border-left: 1px solid #000;
+  padding-top: 50px;
+  height: 100%;
+}
+
+.container > * {
+  padding-right: 200px;
+}
+
+#toprogress > div {
+  padding: 30px;
+  position: relative;
+  margin-bottom: 1px;
+}
+
+#toprogress > div > a {
+  position: relative;
+  color: #000;
+}
+
+#toprogress > div > span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  background: rgba(50, 50, 50, .25);
+}
+
+.toprogress-not-started {
+  background: palegreen;
+}
+
+.toprogress-progressing {
+  background: paleturquoise;
+}
+
+.toprogress-complete {
+  background: palevioletred;
+}
+
+
+
+
+
+
+
+
+
+
+
+
