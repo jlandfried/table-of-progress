@@ -16,6 +16,7 @@
       progressIndClass: 'toprogress-indicator',
       progressIndIdBase: 'toprogress-indicator-',
       progressors: [{$target: $(window), event: 'scroll'}],
+      calibrators: [{$target: $(window), event: 'resize'}],
       currentProgress: function() {
         return $(window).scrollTop();
       },
@@ -24,7 +25,6 @@
         // use the top of the div as the starting point. Otherwise use
         var distFromEnd = $(document).height() - $el.offset().top;
         if (distFromEnd < $(window).height()) {
-          console.log(distFromEnd);
           return $el.offset().top - (distFromEnd - $el.outerHeight());
         }
         return $el.offset().top;
@@ -44,13 +44,13 @@
     options = $.extend(defaults, options);
 
     this.each(function() {
-      cp($(this), options)
+      top($(this), options)
     });
 
     // Make our content progress object.
-    function cp($el, config) {
-      var cpo = {
-        cpo: this,
+    function top($el, config) {
+      var top = {
+        top: this,
         el: $el,
         o: options,
         $contents: $(options.contentSelector),
@@ -60,19 +60,11 @@
           var o = self.o;
           var contentCount = 0;
           $el.data('toprogress-wrap', 'true').addClass(self.o.wrapClass);
-
           // Add a progress item to the wrapper for each one found.
           self.$contents.each(function() {
             var $this = $(this);
             var $title = $(this).find(o.titleSelector).first();
             contentCount++;
-            var finishPoint = cpo.o.getFinish($this);
-            var startPoint = cpo.o.getStart($this);
-            $this.data('toprogress-item', contentCount)
-              .data('toprogress-finish', finishPoint)
-              .data('toprogress-start', startPoint);
-
-            $($this.data('toprogress-item')).data('cp-finish', finishPoint);
 
             // Create a progress item.
             var $progressItem = $('<' + o.progressEl + '>', {
@@ -80,10 +72,16 @@
                 id: o.progressItemIdBase  + contentCount
               }
             );
+            var anchorName = 'toprogess-anchor-' + contentCount;
             var $anchor = $('<a>', {
               class: o.anchorClass,
-              text: $title.text()
+              text: $title.text(),
+              href: '#' + anchorName
             });
+            var $anchorPoint = $('<a>', {
+              name: anchorName
+            });
+            $this.before($anchorPoint)
             $progressItem.append($anchor);
             // Create a progress indicator and add it to the progress item content.
             var $progressIndicator = $('<' + o.progressIndEl + '>', {
@@ -96,59 +94,80 @@
             $el.append($progressItem);
             $progressItem.data('toprogress-el', $this);
             $progressItem.data('toprogress-indicator', $progressIndicator);
-            cpo.progressItems.push($progressItem);
+            top.progressItems.push($progressItem);
 
             $.each(o.progressors, function() {
               this.$target.on(this.event, self.progress);
             });
+
+            $.each(o.calibrators, function() {
+              this.$target.on(this.event, top.calibrate);
+            });
           });
-          cpo.progress();
+          top.calibrate();
+          top.progress();
           return $el;
+        },
+        calibrate: function() {
+          var contentCount = 0;
+          $.each(top.progressItems, function() {
+            var $progressEl = $(this).data('toprogress-el');
+            var $this = $(this);
+            contentCount++;
+            var finishPoint = top.o.getFinish($progressEl);
+            var startPoint = top.o.getStart($progressEl);
+            $progressEl.data('toprogress-finish', finishPoint)
+              .data('toprogress-start', startPoint);
+            $($this.data('toprogress-item')).data('cp-finish', finishPoint);
+          });
         },
         progress: function() {
           var self = this;
-          $.each(cpo.progressItems, function() {
+          $.each(top.progressItems, function() {
             var $progressEl = $(this).data('toprogress-el');
-            var finish = cpo.o.currentProgress();
+            var finish = top.o.currentProgress();
             var $this = $(this);
-            var percentComplete = cpo.handleIndividualProgress($progressEl, finish);
+            var percentComplete = top.handleIndividualProgress($progressEl, finish);
             $this.data('toprogress-indicator').width(percentComplete + '%')
             if (!percentComplete) {
-              cpo.markNotStarted($this)
+              top.markNotStarted($this)
             }
             else if (percentComplete == 100) {
-              cpo.markComplete($this);
+              top.markComplete($this);
             }
             else {
-              cpo.markInProgress($this);
+              top.markInProgress($this);
             }
           });
         },
         markNotStarted: function($el) {
-          if (!$el.hasClass(cpo.o.indBeforeClass)) {
-            $el.addClass(cpo.o.indBeforeClass)
-              .removeClass(cpo.o.indCompleteClass)
-              .removeClass(cpo.o.indProgressClass);
+          if (!$el.hasClass(top.o.indBeforeClass)) {
+            $el.addClass(top.o.indBeforeClass)
+              .removeClass(top.o.indCompleteClass)
+              .removeClass(top.o.indProgressClass);
           }
         },
         markInProgress: function($el) {
-          if (!$el.hasClass(cpo.o.indProgressClass)) {
-            $el.addClass(cpo.o.indProgressClass)
-              .removeClass(cpo.o.indCompleteClass)
-              .removeClass(cpo.o.indBeforeClass);
+          if (!$el.hasClass(top.o.indProgressClass)) {
+            $el.addClass(top.o.indProgressClass)
+              .removeClass(top.o.indCompleteClass)
+              .removeClass(top.o.indBeforeClass);
           }
         },
         markComplete: function($el) {
-          if (!$el.hasClass(cpo.o.indCompleteClass)) {
-            $el.addClass(cpo.o.indCompleteClass)
-              .removeClass(cpo.o.indBeforeClass)
-              .removeClass(cpo.o.indProgressClass);
+          if (!$el.hasClass(top.o.indCompleteClass)) {
+            $el.addClass(top.o.indCompleteClass)
+              .removeClass(top.o.indBeforeClass)
+              .removeClass(top.o.indProgressClass);
           }
         },
         handleIndividualProgress: function($el) {
           var start = $el.data('toprogress-start');
           var finish = $el.data('toprogress-finish');
-          var progress = cpo.o.currentProgress();
+          var progress = top.o.currentProgress();
+
+
+
           if (progress < start) {
             return 0;
           }
@@ -160,7 +179,7 @@
           }
         }
       };
-      return cpo.init();
+      return top.init();
     }
   }
 
